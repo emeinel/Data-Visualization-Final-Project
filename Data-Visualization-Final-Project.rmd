@@ -1,0 +1,392 @@
+---
+title: "What is the place of Latin American immigrants in the US job economy?"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+#runtime: shiny
+    theme: cerulean
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(tidyverse)
+library(dplyr)
+library(plotly)
+
+```
+
+
+Population {data-orientation=columns}
+===================================== 
+
+Column {.tabset}
+-----------------------------------------------------------------------
+
+### Latin America Map
+
+```{r}
+library(tidyverse)
+library(maps)
+library(sf)
+library(viridis)
+latam <- read.csv("latam_populations.csv")
+my_world_map <- map_data("world")
+
+latam$popnum<-gsub("\\..*","",latam$Population)
+latam$popnum<-as.numeric(gsub("\\,", "",latam$popnum))
+
+imm_pop_df <- data.frame("region" = latam$Country.of.Birth, "pop" = latam$popnum)
+
+latam_map_data <- left_join(my_world_map, imm_pop_df, by = "region")
+
+
+p <- latam_map <- ggplot(data = latam_map_data, mapping = aes(x = long, y = lat, group = group, fill = pop)) + 
+  geom_polygon(color = "black") + theme_classic() + 
+  labs(x = "", y = "", title = "Latin American Immigrant Population by Country of Birth 2021", caption = "Source: US Census Bureau 2021") + 
+  theme(axis.text.x = element_blank(), axis.text.y = element_blank(), axis.line = element_blank(), axis.ticks = element_blank()) + 
+  scale_fill_viridis_c(direction = -1, option = "A", breaks=c(10000000, 1500000, 1200000, 1000000, 800000, 600000, 400000, 200000, 100000, 50000), labels = c(">10 million", "1.2-1.5 million", "1-1.2 million", "800,000-1 million", "600,000-800,000", "400,000-600,000", "200,000-400,000", "100,000-200,000", "50,000-100,000", "0-50,000"),
+                       name = "US Immigrant Population", na.value = "gray90") +
+   guides(fill = guide_legend(ncol = 1)) + 
+  theme(legend.position = "right") + 
+  coord_sf(xlim = c(-120, -35), ylim = c(30, -55))
+p
+
+```
+
+> Note: Mexico has the largest Latin American immigrant population with almost 10.7 million people. The next largest populations are from El Salvador, Cuba, the Dominican Republic, Guatemala, and Colombia. It is important to know who Latin American immigrants are and where they come from in order to determine their place in the US job economy. Source: US Census Bureau 2021.
+
+### Central America and Caribbean Map
+
+```{r}
+library(tidyverse)
+library(maps)
+library(sf)
+library(viridis)
+latam <- read.csv("latam_populations.csv")
+my_world_map <- map_data("world")
+
+latam$popnum<-gsub("\\..*","",latam$Population)
+latam$popnum<-as.numeric(gsub("\\,", "",latam$popnum))
+
+imm_pop_df <- data.frame("region" = latam$Country.of.Birth, "pop" = latam$popnum)
+
+latam_map_data <- left_join(my_world_map, imm_pop_df, by = "region")
+
+
+p <- centam_map <- ggplot(data = latam_map_data, mapping = aes(x = long, y = lat, group = group, fill = pop)) + 
+  geom_polygon(color = "black") + theme_classic() + 
+  labs(x = "", y = "", title = "", caption = "Source: US Census Bureau 2021") + 
+  theme(axis.text.x = element_blank(), axis.text.y = element_blank(), axis.line = element_blank(), axis.ticks = element_blank()) + 
+  scale_fill_viridis_c(direction = -1, option = "A", breaks = c(50000, 100000, 200000, 400000, 600000, 800000, 1000000, 1200000, 1500000, 10000000), labels = c("0-50,000", "50,000-100,000", "100,000-200,000", "200,000-400,000", "400,000-600,000", "600,000-800,000", "800,000-1 million", "1-1.2 million", "1.2-1.5 million", ">10 million"), name = "US Immigrant\nPopulation", 
+                       na.value = "gray90") +
+  guides(fill = guide_legend(nrow = 2)) + 
+  theme(legend.position = "bottom", legend.text = element_text(size = 6)) + 
+  coord_sf(xlim = c(-120, -65), ylim = c(5, 30))
+p
+
+```
+
+> Note: Mexico has the largest Latin American immigrant population with almost 10.7 million people. The next largest populations are from El Salvador, Cuba, the Dominican Republic, Guatemala, and Colombia. It is important to know who Latin American immigrants are and where they come from in order to determine their place in the US job economy. Source: US Census Bureau 2021.
+
+
+Column {data-width=500}
+-----------------------------------------------------------------------
+
+### Immigrant Population by Region of Birth 2021
+
+```{r}
+latam <- read.csv("Latin_America.csv")
+library(ggplot2)
+library(dplyr)
+
+p <- latam %>%
+  arrange(Foreign.born.population) %>%
+  mutate(Region.of.Birth = factor(Region.of.Birth, levels=c("South America", "Central America", "Caribbean", "Mexico"))) %>%
+ggplot( aes(x = Region.of.Birth, y = Foreign.born.population)) +
+  geom_point(aes(text = paste0("<b>", Region.of.Birth, "</b>", "<br>", "Population: ", scales::comma(Foreign.born.population, 2), "<br>"))) + 
+  geom_segment( aes(x = Region.of.Birth, xend = Region.of.Birth, y = 0, yend = Foreign.born.population), color=c("#C77CFF", "#00BFC4", "#F8766D", "#7CAE00"), size = 0.75, linetype = 1) + 
+  geom_point(color=c("#C77CFF", "#00BFC4", "#F8766D", "#7CAE00"), size=4) + 
+  theme_light() +
+  coord_flip() +
+  theme(
+    panel.grid.major.y = element_blank(),
+    panel.border = element_blank(),
+    axis.ticks.y = element_blank()) + 
+  labs(y = "Population", x = "") +
+  scale_y_continuous(labels = scales::comma) + 
+  annotate(geom = "text", x = 4.5, y = 9000000, label = "Source: US Census Bureau 2021", size = 2.6, hjust = 0)
+p
+ggplotly(p, tooltip = "text")
+```
+
+> Note: Although Mexico is a country and not a region, Mexican-born immigrants make up nearly half of the total Latin American immigrant population. Because this category comprises such a large portion of the population, it has been singled out in these visualizations. Source: US Census Bureau 2021.
+
+
+Demographics {data-orientation=columns}
+=================
+
+Column {data-width=450}
+-------------------------------------
+
+### Total Latin American Immigrant Population by Sex
+
+```{r}
+# Build Dataset
+id <- c("1", "2", "3", "4", "5", "6", "7", "8")
+region <- c(rep("Mexico",2),rep("Caribbean",2),rep("Central America",2), rep("South America", 2))
+sex <- paste(c("Male","Female","Male","Female","Male","Female","Male","Female"))
+pop <- c(5584029,5113345,2072962,2443296,1986194,1833409,1711388,1945423)
+percent <- c("24.6%", "22.5%", "9.1%", "10.8%", "8.8%", "8.1%", "7.5%", "8.6%")
+data <- data.frame(id,region,sex,pop,percent)
+
+# Donut graph
+data$fraction = data$pop / sum(data$pop)
+data$ymax = cumsum(data$fraction)
+data$ymin = c(0, head(data$ymax, n=-1))
+data$labelPosition <- (data$ymax + data$ymin) / 2
+data$label <- paste0(data$region, "\n", data$sex, "\n", data$percent)
+my_colors <- c("#569d00", "#70d300ff", "#df4958", "#df6c49", "#008fb0", "#00b097", "#9158e6", "#c158e6")
+
+p <- ggplot(data, aes(ymax=ymax, ymin=ymin, xmax=4, xmin=3, fill = id)) +
+  geom_rect() +
+  geom_text( x=3.5, aes(y=labelPosition, label=label), size=3) + 
+  scale_fill_manual(values = my_colors) +
+  coord_polar(theta="y") +
+  xlim(c(2, 4)) +
+  theme_void() +
+  theme(legend.position = "none") + 
+  labs(caption = "Source: US Census Bureau 2021")
+p
+```
+
+> Note: Each of the four regions have nearly equal numbers of men and women. However, there are more South American and Caribbean women than men. Gender can impact the types of jobs sought out by immigrants, and may also influence their salary ranges. Source: US Census Bureau 2021.
+
+
+Column {.tabset}
+-------------------------------------
+### Age
+
+```{r}
+age <- read.csv("latam_age.csv")
+
+p <- ggplot(age)+
+  geom_linerange(aes(x = reorder(Region, +Number), ymin = 0, ymax = Number, color = Age),
+                 position = position_dodge(width = 1))+
+  geom_point(aes(x = reorder(Region, +Number), y = Number, color = Age,  text = paste0( "<b>", Region, "</b>", "<br>", "Population: ", scales::comma(Number, 2), "<br>", "Age:", Age)), size = 3, position = position_dodge(width = 1)) + 
+  scale_y_continuous(labels = scales::comma) + scale_color_manual(values = c("#ccffaa", "#99ff55", "#55d400", "#338000")) +
+  labs(x = "Region of Birth", y = "Population", title = "Immigrant Population by Age 2021") + theme_minimal() + annotate(geom = "text", x = 1.2, y = 9500000, label = "Source: US Census Bureau 2021", size = 2.6, hjust = 0) + 
+  scale_x_discrete(labels=c("South \nAmerica", "Central \nAmerica", "Caribbean", "Mexico"))
+p
+ggplotly(p, tooltip = "text")
+```
+
+> Note: Most Latin American immigrants fall within typical workforce age ranges. Source: US Census Bureau 2021.
+
+
+### US Citizenship
+
+```{r}
+cit <- read.csv("Latam Citizenship1.csv")
+
+cit$Years <- factor(cit$Years, levels=c('2010 -2021', '2000-2009', 'Before 2000'))
+
+p <- ggplot(data = cit, aes(x = reorder(Region, +Percent), y = Percent, fill = Years, 
+                            text = paste0("<b>", Region, "</b>", "<br>", "US Citizen: ", round(Percent*100, digits = 3), "%", "<br>"))) + 
+  geom_bar(position = "stack", stat = "identity") + 
+  scale_fill_manual(values=c('#22A884', '#FDE725', '#440154')) + 
+  labs(x = "Region of Birth", y = "Percentage US Citizen", 
+       title = "US Citizenship by Period of Entry 2021", fill = "Entered the US") + 
+  scale_y_continuous(labels = scales::percent) + theme_minimal() + 
+  annotate(geom = "text", x = 1.2, y = 0.7, label = "Source: US Census Bureau 2021", size = 2.6, hjust = 0) +
+  scale_x_discrete(labels=c("Central \nAmerica", "Mexico", "South \nAmerica", "Caribbean"))
+p
+ggplotly(p, tooltip = "text")
+```
+
+> Note: US citizenship status can influence the types of jobs available to immigrants, as well as salary potential and job security. Most Latin American immigrants gained US citizenship before 2000. Although the time frames are approximately equal, more people gained US citizenship from 2000-2009 than 2010-2021, which may indicate a decreasing rate of naturalized citiens. Overall, immigrants from Mexico and Central America have much lower proportions of naturalized citiens, which impacts the jobs available to them in the US. Source: US Census Bureau 2021.
+
+
+English Language {data-orientation=columns}
+=================
+
+### English Language Abilities 2021
+
+```{r}
+english <- read.csv("latam_English_nested.csv")
+
+p <- ggplot(data = english, aes(x = Subgroup, y = Decimal, fill = Subgroup, text = paste0("<b>", Subgroup, "</b>", "<br>", round(Decimal*100, digits = 3), "%", "<br>"))) + 
+  geom_bar(stat = "identity") + 
+  labs(x = "", y = "", title = "") + 
+  scale_y_continuous(labels = scales::percent) + 
+  theme_bw() +  
+  scale_x_discrete(labels=c("Caribbean", "Central \nAmerica", "Mexico", "South \nAmerica")) + 
+  scale_fill_manual(values=c("#F8766D", "#00BFC4", "#7CAE00", "#C77CFF")) +
+  theme(axis.text.x=element_blank(), axis.ticks.x=element_blank(), 
+        legend.position="top", strip.background = element_rect(fill = "white")) + 
+  labs(fill = "Region of Birth") +
+  annotate(geom = "text", x = 3.5, y = -0.05, label = "Source: US Census Bureau 2021", size = 2.6, hjust = 0) +
+  facet_wrap(~Group, ncol = 3, strip.position="bottom")
+p
+ggplotly(p, tooltip = "text")
+```
+
+> Note: The ability to speak and understand English can impact the potential to get a job in the US. However, the ability to speak English well is not required for every job. The middle graph displays rather subjective data, as the responses are based on self-evaluation rather than a language test. The middle graph likely reflects a lack of confidence in speaking English, but it does not necessarily indicate that one cannot successfully communicate with a supervisor, coworkers, or clients. These three graphs indicate that most Latin American immigrants do not speak English as their first language, but this does not exclude them from the US workforce. Source: US Census Bureau 2021.
+
+
+Education {data-orientation=columns}
+=================
+
+### Highest Achieved Level of Education by Region of Birth 2021
+
+```{r}
+latam <- read.csv("Latin_America.csv")
+latam_ed <- data.frame(Region = latam$Region.of.Birth, less_hs = latam$Less.than.high.school.graduate, hs = latam$High.school.graduate..includes.equivalency., some_college = latam$Some.college.or.associate.s.degree, bach = latam$Bachelor.s.degree, grad = latam$Graduate.or.professional.degree)
+library(GGally)
+
+p <- ggparcoord(latam_ed,
+           columns = 2:6, groupColumn = 1,
+           showPoints = TRUE, 
+           scale = "globalminmax",
+           title = "",
+           alphaLines = 1, 
+#           text = paste0("<b>", Region, "</b>", "<br>", "Percent: ", round(value*100, digits = 3), "%", "<br>")
+) + 
+  theme(plot.title = element_text(size=10)) + theme_minimal() +
+  scale_x_discrete(labels=c("Less than \nHigh School", 
+                            "High \nSchool",
+                            "Some \nCollege", 
+                            "Bachelor's \nDegree", 
+                            "Graduate \nDegree")) + 
+  scale_y_continuous(labels = scales::percent) + 
+  labs(x = "", y = "", fill = "Region of Birth") +
+  annotate(geom = "text", x = 4.5, y = 0.7, label = "Source: US Census Bureau 2021", size = 2.6, hjust = 0) +
+  theme(legend.title=element_blank(), legend.position = "bottom") 
+p
+ggplotly(p)
+```
+
+> Note: Levels of formal education can impact the types of jobs available to immigrants along with their salary potentials. South American immigrants tend to have the highest levels of formal education, followed by the Caribbean, Mexico, and Central America. Nearly half of Mexican and Central American-born immigrants do not have a high school diploma or equivalency, which may limit job opportunities in the US. Source: US Census Bureau 2021.
+
+
+
+Employment {data-orientation=columns}
+=================
+
+Column {data-width=400}
+-----------------------------------------------------------------------
+
+### Employment Status 2021
+
+```{r}
+employ <- read.csv("latam_employment.csv")
+
+employ$Status <- factor(employ$Status, levels=c('Not in labor force', 'Unemployed', 'Employed'))
+
+p <- ggplot(data = employ, aes(x = reorder(Region, -Percent), y = Percent, fill = Status, text = paste0("<b>", Region, "</b>", "<br>", Status, "<br>", round(Percent*100, digits = 3), "%", "<br>"))) + 
+  geom_bar(position = "stack", stat = "identity") + scale_fill_manual(values=c('#E69F00', '#0072B2', '#56B4E9')) + 
+  labs(x = "Region of Birth", y = "", 
+       title = "", fill = "Employment Status") + 
+  scale_y_continuous(labels = scales::percent) + theme_minimal() + theme(panel.grid = element_blank()) + 
+  scale_x_discrete(labels=c("Central \nAmerica", "Mexico", "South \nAmerica", "Caribbean")) +
+  annotate(geom = "text", x = 1.7, y = 1.05, label = "Source: US Census Bureau 2021", size = 2.6, hjust = 0)
+p
+ggplotly(p, tooltip = "text")
+```
+
+> Note: All four regions have similar employment and unemployment rates. Source: US Census Bureau 2021.
+
+
+Column {.tabset}
+-----------------------------------------------------------------------
+
+### Job Sectors 2021
+
+```{r}
+industry <- read_csv("latam_industries.csv")
+
+# Create a data frame
+industry.df <- data.frame(
+  id = industry$id,
+  Region = industry$Region,
+  Alias = industry$Alias,
+  Percentage = industry$Percentage)
+
+# Format labels
+label_data <- industry
+number_of_bar <- nrow(label_data)
+angle <-  90 - 360 * (label_data$id - 0.5) /number_of_bar
+label_data$hjust <- ifelse( angle < -90, 1, 0)
+label_data$angle <- ifelse(angle < -90, angle+180, angle)
+
+# Create circular barplot
+p <- ggplot(industry, aes(x= as.factor(id), y= Percentage*100, fill = Region)) + 
+  geom_bar(stat="identity") + scale_fill_manual(values=c("#F8766D", "#00BFC4", "#7CAE00", "#C77CFF")) +
+  ylim(-15,31) + 
+  theme_minimal() +
+  theme(
+    legend.position = "right",
+    axis.text = element_blank(),
+    axis.title = element_blank(),
+    panel.grid = element_blank(),
+    plot.margin = unit(rep(-1,4), "cm")
+  ) + labs(fill = "Region of Birth", caption = "Source: US Census Bureau 2021") +
+  coord_polar() + 
+  ggtitle("") +
+  geom_text(data=label_data, aes(x= id, y= (Percentage*100)+1, label= Alias, hjust=hjust), color="black", fontface="bold",alpha=0.6, size=2, angle= label_data$angle, inherit.aes = FALSE )
+p
+```
+
+> Note: This radial graph provides more information about the types of jobs Latin American immigrants currently have and their earning potentials. Source: US Census Bureau 2021.
+
+
+### Job Sectors 2021 Bar Graph
+
+```{r}
+p <- ggplot(data = industry, mapping = aes(x = reorder(Industry, +Percentage), y = Percentage, fill = Region, group = Region, text = paste0("<b>", Region, "</b>", "<br>", Industry, "<br>", round(Percentage*100, digits = 3), "%", "<br>"))) + 
+  geom_bar(position = "dodge", stat = "identity") + 
+  labs(x = "", y = "", fill = "Region of Birth", caption = "Source: US Census Bureau 2021") +
+  scale_y_continuous(labels = scales::percent) +
+  scale_fill_manual(values=c("#F8766D", "#00BFC4", "#7CAE00", "#C77CFF")) +
+  theme_minimal() +
+  theme(axis.text.y = element_blank(), axis.ticks.y = element_blank(), strip.background = element_blank(), strip.text.x = element_blank()) + 
+  coord_flip() +
+  annotate(geom = "text", x = 1.2, y = 0.25, label = "Source: US Census Bureau 2021", size = 2.6, hjust = 0) +
+  facet_wrap(~ Region, ncol = 1)
+p
+ggplotly(p, tooltip = "text")
+```
+
+> Note: This bar graph shows the same data as the radial graph, but with the ability to see exact data by hovering the mouse. This graph provides more information about the types of jobs Latin American immigrants currently have and their earning potentials. Source: US Census Bureau 2021.
+
+
+Income {data-orientation=columns}
+=================
+
+Column
+----------------------------------------------------------------
+
+### Median Annual Income 2021
+
+```{r}
+income <- read_csv("median_income1.csv")
+
+income$Sex <- factor(income$Sex, levels=c('Male', 'Female'))
+
+p <- ggplot(data = income, mapping = aes(x = reorder(Region, -Income), 
+                                         y = Income, 
+                                         fill = Sex, 
+                                         text = paste0("<b>", Region, "</b>", "<br>", Sex, "<br>", "$", scales::comma(Income, 1), "<br>"))) + 
+  geom_bar(position = "dodge", stat = "identity") + 
+  labs(x = "Region of Birth", y = "Median Income", 
+       title = "", fill = "", labels = rev(c("Female", "Male"))) + 
+  annotate(geom = "text", x = 4.1, y = 52000, label = "Source: US Census Bureau 2021", size = 2.6, hjust = 0) +
+  theme(legend.position = "bottom", panel.grid = element_blank()) + scale_y_continuous(labels = scales::dollar_format()) + 
+  scale_fill_manual(values = c("#007580", "#00E8FC")) + theme_minimal() + 
+  scale_x_discrete(labels=c("South \nAmerica", "Caribbean", "Mexico", "Central \nAmerica"))
+p
+ggplotly(p, tooltip = "text")
+```
+> Note: Although South Americans have the highest annual median income in 2021, there is a significant gap between men and women in this region. The gap is less pronounced for Caribbean immigrants, but appears again for Mexican immigrants. While there is a clear distinction between men from the four regions, South American and Caribbean women are nearly equal, while Mexican and Central American women are also nearly equal. Even though South American immigrants tend to have higher incomes, this is not necessarily true for South American women, and shows women's disadvantage in the workforce. Source: US Census Bureau 2021.
+
+
